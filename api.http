@@ -1,5 +1,5 @@
 @base_url=http://localhost:3000/api
-@token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzE3ODNhMGQ2MWIxNmI5NzBjYWMxNzEiLCJzdHVkZW50SWQiOiIyMTUyMjMyOCIsImVtYWlsIjoidmFubWFuaDA4ODhAZ21haWwuY29tIiwicm9sZSI6IlNUVURFTlQiLCJpYXQiOjE3Mjk2MDQ2ODksImV4cCI6MTcyOTYwODI4OX0.QYVmKp1X3mbRGBph_XUy-U4kqBOpnGLWo-nF-_WkCgE
+@token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzE3ODNhMGQ2MWIxNmI5NzBjYWMxNzEiLCJzdHVkZW50SWQiOiIyMTUyMjMyOCIsImVtYWlsIjoidmFubWFuaDA4ODhAZ21haWwuY29tIiwicm9sZSI6IlNUVURFTlQiLCJpYXQiOjE3Mjk2MDg2MjgsImV4cCI6MTcyOTYxMjIyOH0.xlLl2bY5B6DZ8XPVEGAucJ7Z7oHTBoGQjYcd5d0tWys
 
 ### Login user
 POST {{base_url}}/auth/login HTTP/1.1
@@ -69,7 +69,10 @@ Content-Type: application/json
 {
     "questionId": "6717947cfc7a59a5dca22466",
     "selectedOptions": [
-        "Manh",
-        "Loz"
+        "6717947cfc7a59a5dca22467"
     ]
 }
+
+### Get Exam Record by its code (role teacher)
+GET {{base_url}}/exam/123123/record HTTP/1.1
+Authorization: Bearer {{token}}

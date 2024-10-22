@@ -42,6 +42,11 @@ const examSchema = new Schema({
   ],
 });
 
+// Virtual field to calculate the total score for all questions in the exam
+examSchema.virtual("totalScore").get(function () {
+  return this.questions.reduce((sum, question) => sum + question.point, 0);
+});
+
 const Exam = mongoose.model("Exam", examSchema);
 
 module.exports = Exam;

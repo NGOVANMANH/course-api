@@ -22,9 +22,10 @@ const examRecordSchema = new Schema({
             type: Schema.Types.ObjectId,
             ref: "Exam.questions",
           },
-          selectedOptions: [
+          selectedOptionIds: [
             {
-              type: String,
+              type: Schema.Types.ObjectId,
+              ref: "Exam.questions.options",
             },
           ],
         },

@@ -14,14 +14,17 @@ router.post(
 router.get(
   "/:code/join",
   authMiddleware.verifyToken,
-  authMiddleware.controlRoleAccess(["TEACHER", "STUDENT"]),
   examRecordController.joinExam
 );
 router.patch(
   "/:code/save-selected-options",
   authMiddleware.verifyToken,
-  authMiddleware.controlRoleAccess(["TEACHER", "STUDENT"]),
   examRecordController.saveExamSelections
+);
+router.get(
+  "/:code/record",
+  authMiddleware.verifyToken,
+  examRecordController.getExamRecordByExamCode
 );
 router.get("/:code", examController.getExamByCode);
 
