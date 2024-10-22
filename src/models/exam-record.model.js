@@ -2,25 +2,37 @@ const mongoose = require("mongoose");
 
 const Schema = mongoose.Schema;
 
-const ExamRecordSchema = new Schema({
-  examCode: {
-    type: String,
+const examRecordSchema = new Schema({
+  examId: {
+    type: Schema.Types.ObjectId,
     required: true,
+    index: true,
+    ref: "Exam",
   },
-  joiner: [
+  records: [
     {
-      studentId: {
-        type: String,
+      userId: {
+        type: Schema.Types.ObjectId,
         required: true,
+        ref: "User",
       },
-      score: {
-        type: Number,
-        required: true,
-      },
+      results: [
+        {
+          questionId: {
+            type: Schema.Types.ObjectId,
+            ref: "Exam.questions",
+          },
+          selectedOptions: [
+            {
+              type: String,
+            },
+          ],
+        },
+      ],
     },
   ],
 });
 
-const ExamRecord = mongoose.model("ExamRecord", ExamRecordSchema);
+const ExamRecord = mongoose.model("ExamRecord", examRecordSchema);
 
 module.exports = ExamRecord;

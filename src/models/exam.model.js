@@ -7,8 +7,15 @@ const examSchema = new Schema({
     type: String,
     required: true,
     unique: true,
-    indexedDB: true,
+    index: true,
   },
+  authorIds: [
+    {
+      type: Schema.Types.ObjectId,
+      required: true,
+      ref: "User",
+    },
+  ],
   questions: [
     {
       question: {
@@ -27,7 +34,7 @@ const examSchema = new Schema({
           },
           isCorrect: {
             type: Boolean,
-            required: true,
+            default: false,
           },
         },
       ],

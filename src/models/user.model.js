@@ -4,6 +4,12 @@ const Schema = mongoose.Schema;
 
 const userSchema = new Schema(
   {
+    studentId: {
+      type: String,
+      required: true,
+      unique: true,
+      indexedDB: true,
+    },
     name: {
       type: String,
       required: true,
@@ -12,6 +18,7 @@ const userSchema = new Schema(
       type: String,
       required: true,
       unique: true,
+      indexedDB: true,
     },
     password: {
       type: String,
@@ -19,7 +26,7 @@ const userSchema = new Schema(
     },
     role: {
       type: String,
-      enum: ["Teacher", "Student"],
+      enum: ["TEACHER", "STUDENT"],
       required: true,
     },
   },

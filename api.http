@@ -1,35 +1,75 @@
-### Get all courses
-POST  http://localhost:3000/api/auth/register
-Content-Type: : application/json
+@base_url=http://localhost:3000/api
+@token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzE3ODNhMGQ2MWIxNmI5NzBjYWMxNzEiLCJzdHVkZW50SWQiOiIyMTUyMjMyOCIsImVtYWlsIjoidmFubWFuaDA4ODhAZ21haWwuY29tIiwicm9sZSI6IlNUVURFTlQiLCJpYXQiOjE3Mjk2MDQ2ODksImV4cCI6MTcyOTYwODI4OX0.QYVmKp1X3mbRGBph_XUy-U4kqBOpnGLWo-nF-_WkCgE
 
-{
-    "name": "John Doe",
-    "email": "123123",
-    "password": "password",
-    "role": "tah"
-}
-
-### Get a specific course by ID
-GET http://localhost:3000/courses/1
-Accept: application/json
-
-### Create a new course
-POST http://localhost:3000/courses
+### Login user
+POST {{base_url}}/auth/login HTTP/1.1
 Content-Type: application/json
 
 {
-    "title": "New Course",
-    "description": "Description of the new course"
+    "identifier": "vanmanh0888@gmail.com",
+    "password": "vanmanh"
 }
 
-### Update an existing course
-PUT http://localhost:3000/courses/1
+### Register user
+POST {{base_url}}/auth/register HTTP/1.1
 Content-Type: application/json
 
 {
-    "title": "Updated Course",
-    "description": "Updated description of the course"
+    "studentId": "21522328",
+    "name": "Ngo Van Manh",
+    "email": "vanmanh0888@gmail.com",
+    "password": "vanmanh",
+    "role": "Student"
 }
 
-### Delete a course
-DELETE http://localhost:3000/courses/1
+### Test
+GET {{base_url}}/test HTTP/1.1
+Authorization: Bearer {{token}}
+
+### Create Exam (Account must have role teacher)
+POST {{base_url}}/exam HTTP/1.1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "code": "123123",
+    "authorIds": [
+        "671783a0d61b16b970cac171"
+    ],
+    "questions": [
+        {
+            "question": "Tui ten gi",
+            "point": 1,
+            "options": [
+                {
+                    "option": "Manh",
+                    "isCorrect": true
+                },
+                {
+                    "option": "Loz",
+                    "isCorrect": false
+                }
+            ]
+        }
+    ]
+}
+
+### Get Exam by its code (both role)
+GET {{base_url}}/exam/123123 HTTP/1.1
+
+### Join exam by code (both role)
+GET {{base_url}}/exam/123123/join HTTP/1.1
+Authorization: Bearer {{token}}
+
+### Save user selections
+PATCH {{base_url}}/exam/123123/save-selected-options HTTP/1.1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "questionId": "6717947cfc7a59a5dca22466",
+    "selectedOptions": [
+        "Manh",
+        "Loz"
+    ]
+}
