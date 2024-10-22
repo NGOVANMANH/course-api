@@ -7,8 +7,6 @@ const authController = {
     try {
       const { studentId, name, email, password, role } = req.body;
 
-      console.log(req.body);
-
       // Check for missing data
       if (!studentId || !name || !email || !password) {
         return res.status(400).json({ message: "Missing required data." });
