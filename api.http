@@ -1,0 +1,35 @@
+### Get all courses
+POST  http://localhost:3000/api/auth/register
+Content-Type: : application/json
+
+{
+    "name": "John Doe",
+    "email": "123123",
+    "password": "password",
+    "role": "tah"
+}
+
+### Get a specific course by ID
+GET http://localhost:3000/courses/1
+Accept: application/json
+
+### Create a new course
+POST http://localhost:3000/courses
+Content-Type: application/json
+
+{
+    "title": "New Course",
+    "description": "Description of the new course"
+}
+
+### Update an existing course
+PUT http://localhost:3000/courses/1
+Content-Type: application/json
+
+{
+    "title": "Updated Course",
+    "description": "Updated description of the course"
+}
+
+### Delete a course
+DELETE http://localhost:3000/courses/1
