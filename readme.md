@@ -3,7 +3,7 @@
 - **Yarn**: v1.22.22
 
 ```
-use docker edit NODE_ENV=production
+if you use docker => edit NODE_ENV=production (in file .env)
 ```
 
 Step 1:
