@@ -99,6 +99,7 @@ const authController = {
       const token = jwtUtil.generateToken({
         _id: user._id,
         studentId: user.studentId,
+        name: user.name,
         email: user.email,
         role: user.role,
       });

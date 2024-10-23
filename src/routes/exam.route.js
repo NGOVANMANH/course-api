@@ -32,6 +32,7 @@ router.get(
   authMiddleware.verifyToken,
   examRecordController.getExamRecordByExamCode
 );
-router.get("/:code", examController.getExamByCode);
+router.get("/:code", authMiddleware.verifyToken, examController.getExamByCode);
+router.get("/", authMiddleware.verifyToken, examController.getExams);
 
 module.exports = router;

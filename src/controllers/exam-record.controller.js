@@ -1,3 +1,4 @@
+const { response } = require("express");
 const ExamRecord = require("../models/exam-record.model");
 const Exam = require("../models/exam.model");
 
@@ -49,17 +50,23 @@ const examRecordController = {
         }
       }
 
-      return res
-        .status(200)
-        .json({ message: `User ${user.studentId} joined exam ${examCode}.` });
+      return res.status(200).json({
+        message: `User ${
+          user.role.toLowerCase() === "student" ? user.studentId : user.name
+        } joined exam ${examCode}.`,
+      });
     } catch (error) {
       next(error);
     }
   },
   saveExamSelections: async (req, res, next) => {
     try {
-      const { questionId, selectedOptions } = req.body;
-      if (!questionId || !selectedOptions || !Array.isArray(selectedOptions)) {
+      const { questionId, selectedOptionIds } = req.body;
+      if (
+        !questionId ||
+        !selectedOptionIds ||
+        !Array.isArray(selectedOptionIds)
+      ) {
         return res.status(400).json({ message: "Missing or invalid data." });
       }
 
@@ -102,12 +109,12 @@ const examRecordController = {
 
       if (existingResult) {
         // Update the selected options if the question was already answered
-        existingResult.selectedOptions = selectedOptions;
+        existingResult.selectedOptionIds = selectedOptionIds;
       } else {
         // Add new result for the question
         userRecord.results.push({
           questionId,
-          selectedOptions,
+          selectedOptionIds,
         });
       }
 
@@ -121,127 +128,104 @@ const examRecordController = {
       next(error);
     }
   },
+
   getExamRecordByExamCode: async (req, res, next) => {
     try {
       const { code: examCode } = req.params;
-      const { role, _id: userId } = req.user; // Extract the user's ID from the request
+      const { role, _id: userId } = req.user;
 
-      // Find the exam by its code
-      const existingExam = await Exam.findOne({ code: examCode });
-      if (!existingExam) {
+      const existingExam = await Exam.findOne({ code: examCode }).populate({
+        path: "authorId",
+        select: "name email",
+      });
+      if (!existingExam)
         return res.status(404).json({ message: "Exam not found." });
-      }
 
-      // Calculate the total score for the exam
+      const { questions, _id: examId } = existingExam;
       const totalScore = existingExam.totalScore;
 
-      if (role === "Teacher".toUpperCase()) {
-        // Fetch all student records for this exam
-        const examRecords = await ExamRecord.find({
-          examId: existingExam._id,
-        }).populate({
-          path: "records.userId",
-          select: "name email studentId",
-        });
+      const existingExamRecord = await ExamRecord.findOne({ examId }).populate({
+        path: "records.userId",
+        select: "name email",
+      });
+      if (!existingExamRecord)
+        return res.status(404).json({ message: "No record found." });
 
-        if (!examRecords || examRecords.length === 0) {
-          return res.status(404).json({ message: "No exam records found." });
-        }
+      const calculateRecordScore = (record) => {
+        let score = 0;
 
-        // Calculate scores for all students and return exam details
-        const studentScores = examRecords.map((record) => {
-          const score = record.records.reduce((totalScore, userRecord) => {
-            const userScore = userRecord.results.reduce((sum, result) => {
-              const question = existingExam.questions.find(
-                (q) => q._id.toString() === result.questionId.toString()
-              );
-
-              if (!question) return sum;
-
-              // Check if the selected options match the correct ones
-              const correctOptions = question.options
-                .filter((opt) => opt.isCorrect)
-                .map((opt) => opt._id.toString());
-              const selectedOptions = result.selectedOptionIds.map((optId) =>
-                optId.toString()
-              );
-
-              // Add points if selected options match
-              if (
-                selectedOptions.length === correctOptions.length &&
-                correctOptions.every((opt) => selectedOptions.includes(opt))
-              ) {
-                return sum + question.point;
-              }
-
-              return sum;
-            }, 0);
-
-            return totalScore + userScore;
-          }, 0);
-
-          return {
-            student: record.records[0].userId, // Assuming one record per user
-            score,
-          };
-        });
-
-        return res.status(200).json({
-          exam: existingExam, // Include the exam details
-          totalScore,
-          students: studentScores, // Include scores for each student
-          records: examRecords, // Include exam records
-        });
-      } else if (role === "Student".toUpperCase()) {
-        // Fetch the logged-in student's record
-        const studentRecord = await ExamRecord.findOne({
-          examId: existingExam._id,
-          "records.userId": userId, // Only fetch the student's record
-        }).populate({
-          path: "records.userId",
-          select: "name email studentId",
-        });
-
-        if (!studentRecord) {
-          return res
-            .status(404)
-            .json({ message: "No record found for this student." });
-        }
-
-        // Calculate the student's score
-        const score = studentRecord.records[0].results.reduce((sum, result) => {
-          const question = existingExam.questions.find(
+        record.results.forEach((result) => {
+          // Find the question in the exam using questionId
+          const question = questions.find(
             (q) => q._id.toString() === result.questionId.toString()
           );
 
-          if (!question) return sum;
+          if (question) {
+            // Check if all selected options match the correct options
+            const correctOptionIds = question.options
+              .filter((opt) => opt.isCorrect)
+              .map((opt) => opt._id.toString());
 
-          const correctOptions = question.options
-            .filter((opt) => opt.isCorrect)
-            .map((opt) => opt._id.toString());
-          const selectedOptions = result.selectedOptionIds.map((optId) =>
-            optId.toString()
+            const selectedOptionIds = result.selectedOptionIds.map((id) =>
+              id.toString()
+            );
+
+            // Check if selected options match the correct options exactly
+            const isCorrect =
+              correctOptionIds.length === selectedOptionIds.length &&
+              correctOptionIds.every((id) => selectedOptionIds.includes(id));
+
+            // If the answer is correct, add the question's points to the score
+            if (isCorrect) {
+              score += question.point;
+            }
+          }
+        });
+
+        return score;
+      };
+
+      const { records } = existingExamRecord;
+
+      const responseExam = existingExam.toObject();
+      responseExam.author = responseExam.authorId;
+      delete responseExam.authorId;
+
+      switch (role.toLowerCase()) {
+        case "student":
+          const studentRecord = records.find(
+            (record) => record.userId.toString() === userId.toString()
           );
 
-          if (
-            selectedOptions.length === correctOptions.length &&
-            correctOptions.every((opt) => selectedOptions.includes(opt))
-          ) {
-            return sum + question.point;
+          if (!studentRecord) {
+            return res
+              .status(404)
+              .json({ message: "No record found for the student." });
           }
 
-          return sum;
-        }, 0);
+          // Calculate the student's score
+          const studentScore = calculateRecordScore(studentRecord);
 
-        return res.status(200).json({
-          exam: existingExam, // Include the exam details
-          student: studentRecord.records[0].userId, // Include student info
-          score, // Include the calculated score
-          totalScore,
-          record: studentRecord, // Include the student's exam record
-        });
-      } else {
-        return res.status(403).json({ message: "Unauthorized access." });
+          return res.status(200).json({
+            exam: responseExam,
+            score: studentScore,
+            record: studentRecord,
+            totalScore: totalScore,
+          });
+        case "teacher":
+          const studentsRecordsWithScores = records.map((record) => ({
+            user: record.userId,
+            score: calculateRecordScore(record),
+            result: record.results,
+          }));
+
+          return res.status(200).json({
+            exam: responseExam,
+            totalScore: totalScore,
+            records: studentsRecordsWithScores,
+          });
+        default:
+          return res.status(403).json({ message: "Access denied." });
       }
     } catch (error) {
       next(error);

@@ -1,5 +1,5 @@
 @base_url=http://localhost:3000/api
-@token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzE4NmFlZjJkZTQzNzJhMmRkM2I1MzkiLCJlbWFpbCI6Imd2QGdtYWlsLmNvbSIsInJvbGUiOiJURUFDSEVSIiwiaWF0IjoxNzI5NjUzNTIxLCJleHAiOjE3Mjk2NTcxMjF9.9WTkMZNjezD_WmSaqlpo1vwd0ml7TzLT09os7gPYXWo
+@token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzE4OWY0NmEwODZjYzgyNWU3N2U2NjUiLCJuYW1lIjoiR2lhbyB2aWVuIiwiZW1haWwiOiJndkBnbWFpbC5jb20iLCJyb2xlIjoiVEVBQ0hFUiIsImlhdCI6MTcyOTY3NjA0NSwiZXhwIjoxNzI5Njc5NjQ1fQ.Cyq2ViubDj83lQorYIwRHCAoKWGag7NNj8w8C50FLNw
 
 ### Login user (anonymous)
 POST {{base_url}}/auth/login HTTP/1.1
@@ -19,46 +19,68 @@ Content-Type: application/json
 POST {{base_url}}/auth/register HTTP/1.1
 Content-Type: application/json
 
-{
-    "name": "Giao vien",
-    "email": "gv@gmail.com",
-    "password": "gv",
-    "role": "teacher"
-}
-
 # {
-#     "studentId": "21522328",
-#     "name": "Ngo Van Manh",
-#     "email": "vanmanh0888@gmail.com",
-#     "password": "vanmanh",
-#     "role": "Student"
+#     "name": "Giao vien",
+#     "email": "gv@gmail.com",
+#     "password": "gv",
+#     "role": "teacher"
 # }
+{
+    "studentId": "21522328",
+    "name": "Ngo Van Manh",
+    "email": "vanmanh0888@gmail.com",
+    "password": "vanmanh",
+    "role": "Student"
+}
 
 ### Test
 GET {{base_url}}/test HTTP/1.1
 Authorization: Bearer {{token}}
 
 ### Create Exam (teacher)
+### duration ms
 POST {{base_url}}/exam HTTP/1.1
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
     "name": "exam test",
-    "authorIds": [
-        "671783a0d61b16b970cac171"
-    ],
+    "startTime": "2024-10-23T10:00:00Z",
+    "endTime": "2024-10-30T11:00:00Z",
+    "duration": 3600000,
     "questions": [
         {
-            "question": "Tui ten gi",
+            "question": "Tui nha o dau",
             "point": 1,
             "options": [
                 {
-                    "option": "Manh",
+                    "option": "Sai gon",
+                    "isCorrect": false
+                },
+                {
+                    "option": "Quang ngai",
+                    "isCorrect": true
+                }
+            ]
+        },
+        {
+            "question": "Tui may tuoi",
+            "point": 2,
+            "options": [
+                {
+                    "option": "18 tuoi",
                     "isCorrect": true
                 },
                 {
-                    "option": "Loz",
+                    "option": "30 tuoi",
+                    "isCorrect": false
+                },
+                {
+                    "option": "20 tuoi",
+                    "isCorrect": false
+                },
+                {
+                    "option": "10 tuoi",
                     "isCorrect": false
                 }
             ]
@@ -70,27 +92,34 @@ Content-Type: application/json
 DELETE {{base_url}}/exam/67186f01c51fae3fae41e973 HTTP/1.1
 Authorization: Bearer {{token}}
 
-### Get Exam by its code (allow anonymous)
-GET {{base_url}}/exam/bonizc HTTP/1.1
+### Get Exam by its code (teacher, student)
+GET {{base_url}}/exam/9JPHB3 HTTP/1.1
+Authorization: Bearer {{token}}
 
 ### Join exam by code (teacher, student)
-GET {{base_url}}/exam/123123/join HTTP/1.1
+GET {{base_url}}/exam/9JPHB3/join HTTP/1.1
 Authorization: Bearer {{token}}
 
 ### Save user selections (teacher, student)
-PATCH {{base_url}}/exam/123123/save-selected-options HTTP/1.1
+PATCH {{base_url}}/exam/9JPHB3/save-selected-options HTTP/1.1
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-    "questionId": "6717947cfc7a59a5dca22466",
-    "selectedOptions": [
-        "6717947cfc7a59a5dca22467"
+    "questionId": "67189f5ba086cc825e77e66a",
+    "selectedOptionIds": [
+        "67189f5ba086cc825e77e66b"
     ]
 }
 
 ### Get Exam Record by its code (teacher, student)
 ### Teacher get list student who joined in exam
 ### Student get yourselft
-GET {{base_url}}/exam/123123/record HTTP/1.1
+GET {{base_url}}/exam/9JPHB3/record HTTP/1.1
+Authorization: Bearer {{token}}
+
+
+### Get Exams (teacher, student)
+### type(optional): [null->get all exams], [created->(only teacher) get exam create by user], [taken->get exam which joined by user]
+GET {{base_url}}/exam?type=created HTTP/1.1
 Authorization: Bearer {{token}}

@@ -1,3 +1,5 @@
+const ExamRecord = require("../models/exam-record.model");
+const Exam = require("../models/exam.model");
 const ExamModel = require("../models/exam.model");
 const { generateCode } = require("../utils/code-generator.util");
 
@@ -5,13 +7,13 @@ const examController = {
   // Create a new exam
   createExam: async (req, res, next) => {
     try {
-      const { name, authorIds, questions } = req.body;
+      const { name, startTime, endTime, duration, questions } = req.body;
+      const { _id: userId } = req.user;
 
       // Validate required data
-      if (!name || !authorIds || !questions) {
+      if (!name || !startTime || !endTime || !duration || !questions) {
         return res.status(400).json({
-          message:
-            "Missing required data. Please provide 'name', 'authorIds', and 'questions'.",
+          message: "Missing required data.",
         });
       }
 
@@ -28,7 +30,10 @@ const examController = {
       const newExam = new ExamModel({
         code,
         name,
-        authorIds: authorIds,
+        startTime,
+        endTime,
+        duration,
+        authorId: userId,
         questions,
       });
 
@@ -51,7 +56,7 @@ const examController = {
       // Find exam by code
       const exam = await ExamModel.findOne({
         code: code.toUpperCase(),
-      }).populate("authorIds", "name email");
+      }).populate("authorId", "name email");
       if (!exam) {
         return res.status(404).json({ message: "Exam not found." });
       }
@@ -77,14 +82,13 @@ const examController = {
         return res.status(404).json({ message: "Exam not found." });
       }
 
-      const isAuthOfExam = existingExam.authorIds.includes(user._id);
+      const isAuthOfExam =
+        existingExam.authorId.toString() === user._id.toString();
 
       if (!isAuthOfExam)
-        return res
-          .status(403)
-          .json({
-            message: "Access denied. You are not an author of this exam.",
-          });
+        return res.status(403).json({
+          message: "Access denied. You are not an author of this exam.",
+        });
 
       const deletedExam = await ExamModel.findByIdAndDelete(id);
 
@@ -96,6 +100,67 @@ const examController = {
         .json({ message: "Exam deleted.", exam: deletedExam });
     } catch (error) {
       next(error);
+    }
+  },
+  // Get exams grouped by user
+  getExams: async (req, res, next) => {
+    const { type } = req.query;
+    const user = req.user;
+
+    try {
+      switch (type) {
+        case "created":
+          // Fetch exams created by the teacher
+          if (user.role.toLowerCase() === "teacher") {
+            const exams = await Exam.find({ authorId: user._id });
+            if (!exams || exams.length === 0) {
+              return res.status(404).json({ message: "Exams not found." });
+            }
+            return res.status(200).json({ exams });
+          } else {
+            return res.status(403).json({
+              message: "Access denied. Only teachers can view created exams.",
+            });
+          }
+
+        case "taken":
+          // Fetch exam records where the user has participated
+          const records = await ExamRecord.find({
+            "records.userId": user._id,
+          }).populate("examId", "code name startTime endTime duration"); // Only populate basic exam info
+
+          if (!records || records.length === 0) {
+            return res.status(404).json({ message: "No exam records found." });
+          }
+
+          // Manually retrieve the questions and results
+          const populatedRecords = await Promise.all(
+            records.map(async (record) => {
+              const exam = await Exam.findById(record.examId).select(
+                "questions"
+              ); // Get questions directly from the Exam model
+              return {
+                examInfo: record.examId,
+                questions: exam.questions, // Attach the questions
+                userResults: record.records.find((r) =>
+                  r.userId.equals(user._id)
+                ).results,
+              };
+            })
+          );
+
+          return res.status(200).json({ exams: populatedRecords });
+
+        default:
+          // Fallback case: Fetch all available exams (could be used for admins or general access)
+          const allExams = await Exam.find({});
+          if (!allExams || allExams.length === 0) {
+            return res.status(404).json({ message: "No exams found." });
+          }
+          return res.status(200).json({ exams: allExams });
+      }
+    } catch (error) {
+      next(error); // Handle any errors
     }
   },
 };

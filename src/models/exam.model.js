@@ -14,13 +14,44 @@ const examSchema = new Schema(
       type: String,
       required: true,
     },
-    authorIds: [
-      {
-        type: Schema.Types.ObjectId,
-        required: true,
-        ref: "User",
+    startTime: {
+      type: Date,
+      required: true,
+      validate: {
+        validator: function (v) {
+          return v >= Date.now();
+        },
+        message: () =>
+          `Start time must be greater than or equal to the current time.`,
       },
-    ],
+    },
+    endTime: {
+      type: Date,
+      required: true,
+      validate: {
+        validator: function (v) {
+          return v >= this.startTime;
+        },
+        message: () => `End time must be greater than start time.`,
+      },
+    },
+    duration: {
+      type: Number,
+      required: true,
+      validate: {
+        validator: function (v) {
+          const durationInMs = this.endTime - this.startTime;
+          return v > 0 && v <= durationInMs;
+        },
+        message: () =>
+          `Duration must in the time range between startTime and endTime.`,
+      },
+    },
+    authorId: {
+      type: Schema.Types.ObjectId,
+      required: true,
+      ref: "User",
+    },
     questions: [
       {
         question: {
@@ -48,6 +79,7 @@ const examSchema = new Schema(
   },
   {
     timestamps: true,
+    virtuals: true,
   }
 );
 
