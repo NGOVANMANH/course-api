@@ -2,6 +2,10 @@
 - **MongoDB**: v6.0.18
 - **Yarn**: v1.22.22
 
+```
+use docker edit NODE_ENV=production
+```
+
 Step 1:
 
 ```bash
