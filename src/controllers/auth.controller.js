@@ -8,20 +8,28 @@ const authController = {
       const { studentId, name, email, password, role } = req.body;
 
       // Check for missing data
-      if (!studentId || !name || !email || !password) {
+      if (!name || !email || !password || !role) {
         return res.status(400).json({ message: "Missing required data." });
       }
 
       // Validate role
-      const validRoles = ["Teacher", "Student"];
-      if (role && !validRoles.includes(role)) {
+      const validRoles = ["teacher", "student"];
+      if (!validRoles.includes(role.toLowerCase())) {
         return res.status(400).json("Role is not supported.");
+      }
+
+      if (role.toLowerCase() === "student" && !studentId) {
+        return res
+          .status(400)
+          .json({ message: "Role student must have studentId data." });
       }
 
       // Check if user already exists (assuming email should be unique)
       const existingUser = await User.findOne({ email });
       if (existingUser) {
-        return res.status(400).json("User with this email already exists.");
+        return res
+          .status(400)
+          .json({ message: "User with this email already exists." });
       }
 
       // Hash the password
@@ -57,6 +65,7 @@ const authController = {
       next(error);
     }
   },
+
   login: async (req, res, next) => {
     try {
       const { identifier, password } = req.body;

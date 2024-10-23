@@ -14,8 +14,8 @@ services:
       - SALT_ROUNDS=${SALT_ROUNDS}
       - JWT_SECRET=${JWT_SECRET}
     volumes:
-      - .:/usr/src/app
-    command: yarn dev
+      - .:/usr/src/app # Use this for development; remove for production
+    command: yarn start # Optional, as CMD is already set in Dockerfile
 
   mongo:
     image: mongo:6.0.18

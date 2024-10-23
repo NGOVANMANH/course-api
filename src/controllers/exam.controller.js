@@ -1,25 +1,33 @@
 const ExamModel = require("../models/exam.model");
+const { generateCode } = require("../utils/code-generator.util");
 
 const examController = {
   // Create a new exam
   createExam: async (req, res, next) => {
     try {
-      const { code, authorIds, questions } = req.body;
+      const { name, authorIds, questions } = req.body;
 
       // Validate required data
-      if (!code || !authorIds || !questions) {
-        return res.status(400).json({ message: "Missing required data." });
+      if (!name || !authorIds || !questions) {
+        return res.status(400).json({
+          message:
+            "Missing required data. Please provide 'name', 'authorIds', and 'questions'.",
+        });
       }
 
-      // Check if an exam with the same code already exists
-      const existingExam = await ExamModel.findOne({ code });
-      if (existingExam) {
-        return res.status(400).json({ message: "Exam code already exists." });
-      }
+      let existingExam;
+      let code;
 
-      // Create new exam
+      // Generate a unique exam code
+      do {
+        code = generateCode().toUpperCase(); // Generate and convert to uppercase for consistency
+        existingExam = await ExamModel.findOne({ code });
+      } while (existingExam);
+
+      // Create new exam with unique code
       const newExam = new ExamModel({
         code,
+        name,
         authorIds: authorIds,
         questions,
       });
@@ -41,15 +49,51 @@ const examController = {
       const { code } = req.params;
 
       // Find exam by code
-      const exam = await ExamModel.findOne({ code }).populate(
-        "authorIds",
-        "name email"
-      );
+      const exam = await ExamModel.findOne({
+        code: code.toUpperCase(),
+      }).populate("authorIds", "name email");
       if (!exam) {
         return res.status(404).json({ message: "Exam not found." });
       }
 
       return res.status(200).json({ exam });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // delete exam by its _id
+  deleteExamById: async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const user = req.user;
+
+      if (!id)
+        return res.status(400).json({ message: "Id field is required!" });
+
+      // Check if the exam exists
+      const existingExam = await ExamModel.findById(id);
+      if (!existingExam) {
+        return res.status(404).json({ message: "Exam not found." });
+      }
+
+      const isAuthOfExam = existingExam.authorIds.includes(user._id);
+
+      if (!isAuthOfExam)
+        return res
+          .status(403)
+          .json({
+            message: "Access denied. You are not an author of this exam.",
+          });
+
+      const deletedExam = await ExamModel.findByIdAndDelete(id);
+
+      if (!deletedExam)
+        return res.status(404).json({ message: "Exam not found." });
+
+      return res
+        .status(200)
+        .json({ message: "Exam deleted.", exam: deletedExam });
     } catch (error) {
       next(error);
     }

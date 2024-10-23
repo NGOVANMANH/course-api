@@ -2,7 +2,11 @@ const mongoose = require("mongoose");
 
 // const uri = "mongod://localhost:27017/course-api-data";
 const uri =
-  process.env.MONGO_URI || "mongodb://localhost:27017/course-api-data";
+  process.env.NODE_ENV === "production"
+    ? process.env.MONGO_URI
+    : "mongodb://localhost:27017/course-api-data";
+
+console.log(uri);
 
 mongoose
   .connect(uri)

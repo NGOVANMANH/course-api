@@ -2,45 +2,54 @@ const mongoose = require("mongoose");
 
 const Schema = mongoose.Schema;
 
-const examSchema = new Schema({
-  code: {
-    type: String,
-    required: true,
-    unique: true,
-    index: true,
-  },
-  authorIds: [
-    {
-      type: Schema.Types.ObjectId,
+const examSchema = new Schema(
+  {
+    code: {
+      type: String,
       required: true,
-      ref: "User",
+      unique: true,
+      index: true,
     },
-  ],
-  questions: [
-    {
-      question: {
-        type: String,
+    name: {
+      type: String,
+      required: true,
+    },
+    authorIds: [
+      {
+        type: Schema.Types.ObjectId,
         required: true,
+        ref: "User",
       },
-      point: {
-        type: Number,
-        required: true,
-      },
-      options: [
-        {
-          option: {
-            type: String,
-            required: true,
-          },
-          isCorrect: {
-            type: Boolean,
-            default: false,
-          },
+    ],
+    questions: [
+      {
+        question: {
+          type: String,
+          required: true,
         },
-      ],
-    },
-  ],
-});
+        point: {
+          type: Number,
+          required: true,
+        },
+        options: [
+          {
+            option: {
+              type: String,
+              required: true,
+            },
+            isCorrect: {
+              type: Boolean,
+              default: false,
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    timestamps: true,
+  }
+);
 
 // Virtual field to calculate the total score for all questions in the exam
 examSchema.virtual("totalScore").get(function () {

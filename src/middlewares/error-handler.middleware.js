@@ -1,4 +1,6 @@
 const errorHandler = (err, req, res, next) => {
+  console.log(">>> Error:", err);
+
   // Default status code is 500 (Internal Server Error) if not set
   const statusCode = err.statusCode || 500;
 

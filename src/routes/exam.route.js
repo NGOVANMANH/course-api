@@ -11,6 +11,12 @@ router.post(
   authMiddleware.controlRoleAccess(["TEACHER"]),
   examController.createExam
 );
+router.delete(
+  "/:id",
+  authMiddleware.verifyToken,
+  authMiddleware.controlRoleAccess(["TEACHER"]),
+  examController.deleteExamById
+);
 router.get(
   "/:code/join",
   authMiddleware.verifyToken,

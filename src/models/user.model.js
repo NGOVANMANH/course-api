@@ -6,7 +6,6 @@ const userSchema = new Schema(
   {
     studentId: {
       type: String,
-      required: true,
       unique: true,
       indexedDB: true,
     },
